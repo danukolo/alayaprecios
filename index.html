@@ -119,6 +119,28 @@ td.un-col{width:55px;padding-right:4px}
 .alaya-logo{height:56px;display:block}
 .cuotas-mini{flex:0 0 auto;padding:4px 12px;font-size:11px;margin-left:6px}
 .header-card .header-subtitle{color:#f8f6ec}
+
+th.col-n{white-space:normal;line-height:1.2}
+.cards{display:none}
+.card{background:#fff;border:1px solid #c5dece;border-radius:10px;padding:10px 12px}
+.card.vend{background:#fff5f5;border-color:#f5d0cc}
+.card-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card-un{font-size:16px;font-weight:800}
+.card-pr{font-size:16px;font-weight:800;margin-left:auto}
+.card-sub{display:flex;gap:6px;align-items:center;margin:6px 0 8px;font-size:12px;color:#4a6a56;flex-wrap:wrap}
+.card-m2{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;border-top:1px solid #eef6f1;padding-top:7px}
+.card-m2 div{font-size:10px;color:#7a9a85;text-transform:uppercase;letter-spacing:.2px}
+.card-m2 b{display:block;font-size:13px;color:#1a1a1a;text-transform:none;letter-spacing:0;margin-top:1px}
+@media (max-width:700px){
+  .page{padding:1rem}
+  .table-wrap{display:none}
+  .cards{display:grid;gap:8px}
+  .header-card{width:100%}
+  .alaya-logo{height:44px}
+  .stat-label{font-size:8px}
+  .stat-value{font-size:18px}
+  .cuotas-mini{margin-left:0}
+}
 </style>
 </head>
 <body>
@@ -171,6 +193,7 @@ td.un-col{width:55px;padding-right:4px}
       <tbody id="a-tbody"></tbody>
     </table>
   </div>
+  <div class="cards" id="a-cards"></div>
   <div class="last-update" id="a-upd"></div>
 </div>
 </div>
@@ -315,6 +338,17 @@ function render(){
   document.getElementById('a-dis').textContent=dis;
   document.getElementById('a-ven').textContent=ven;
   document.getElementById('a-pct').textContent=data.length?Math.round(ven/data.length*100)+'%':'—';
+  const m=v=>(v!==null&&v!==undefined)?v.toFixed(1):'—';
+  document.getElementById('a-cards').innerHTML=data.length?data.map(r=>{
+    const v=r.es==='vendido';
+    return '<div class="card'+(v?' vend':'')+'">'+
+      '<div class="card-top"><span class="card-un">'+r.un+'</span>'+
+      (v?'<span class="badge bv">Vendido</span>':'<span class="badge bd">Disponible</span>')+
+      '<span class="card-pr">USD '+(r.pr?r.pr.toLocaleString('es-AR'):'—')+'</span></div>'+
+      '<div class="card-sub"><span class="tb">'+r.ti+'</span>'+r.ub+'</div>'+
+      '<div class="card-m2"><div>Cubiertos<b>'+m(r.cu)+'</b></div><div>Balcón<b>'+m(r.ba)+'</b></div><div>Patio/Terr.<b>'+m(r.pt)+'</b></div><div>Vendibles<b>'+m(r.ve)+' m²</b></div></div>'+
+      '</div>';
+  }).join(''):'<div class="no-results">No hay unidades con esos filtros.</div>';
   const tb=document.getElementById('a-tbody');
   if(!data.length){tb.innerHTML='<tr><td colspan="9" class="no-results">No hay unidades con esos filtros.</td></tr>';return;}
   tb.innerHTML=data.map(r=>{
