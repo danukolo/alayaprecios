@@ -208,11 +208,16 @@ function num(s){
 }
 // Lee columnas por nombre de encabezado (no importa el orden en la planilla)
 function parse(text){
-  const lines=text.trim().split('\n').map(l=>parseFields(l.trim()));
-  const head=lines[0].map(h=>h.toLowerCase());
+  const all=text.replace(/\r/g,'').trim().split('\n').map(l=>parseFields(l.trim()));
+  // El encabezado es la primera fila que tenga una columna "Unidad" (puede haber títulos arriba)
+  let hi=all.findIndex(r=>r.some(h=>h.toLowerCase().trim().startsWith('unidad')));
+  if(hi<0){window.__csvHead=all.slice(0,3).map(r=>r.join(' | ')).join('\n');return [];}
+  const lines=all.slice(hi);
+  const head=lines[0].map(h=>h.toLowerCase().trim());
   const ix=k=>head.findIndex(h=>h.includes(k));
-  const c={un:ix('unidad'),nv:ix('piso'),ti:ix('tipolog'),ub:ix('f/cf'),cu:ix('cubierto'),ba:ix('balc'),pt:ix('patio'),ve:ix('vendible'),pr:ix('cuota'),es:ix('estado')};
-  return lines.slice(1).filter(r=>(r[c.un]||'').trim()!=='').map(r=>({
+  const unIx=head.findIndex(h=>h.startsWith('unidad'));
+  const c={un:unIx,nv:ix('piso'),ti:ix('tipolog'),ub:ix('f/cf'),cu:ix('cubierto'),ba:ix('balc'),pt:ix('patio'),ve:ix('vendible'),pr:ix('cuota'),es:ix('estado')};
+  return lines.slice(1).filter(r=>{const u=(r[c.un]||'').trim();return u!==''&&!/^total/i.test(u);}).map(r=>({
     un:r[c.un], nv:(r[c.nv]||'').replace('°',''), ti:r[c.ti]||'', ub:({F:'Frente',CF:'Contrafrente'})[(r[c.ub]||'').toUpperCase()]||r[c.ub]||'',
     cu:num(r[c.cu]), ba:num(r[c.ba]), pt:num(r[c.pt]), ve:num(r[c.ve]), pr:num(r[c.pr]),
     es:(r[c.es]||'').toLowerCase().includes('vend')?'vendido':'disponible'
@@ -331,6 +336,7 @@ async function init(){
   document.getElementById('a-loading').style.display='none';
   if(!text){document.getElementById('a-error').style.display='block';return;}
   rows=parse(text);
+  if(!rows.length){const e=document.getElementById('a-error');e.style.display='block';e.style.whiteSpace='pre-wrap';e.textContent='La planilla cargó pero no encontré la columna "Unidad". Primeras filas recibidas:\n'+(window.__csvHead||text.slice(0,300));return;}
   ddBuildMenu('a-nv',[...new Set(rows.map(r=>r.nv))].sort((a,b)=>nvOrd(a)-nvOrd(b)),render);
   ddBuildMenu('a-ti',[...new Set(rows.map(r=>r.ti))].filter(Boolean).sort(),render);
   ddBuildMenu('a-ub',[...new Set(rows.map(r=>r.ub))].filter(Boolean).sort(),render);
